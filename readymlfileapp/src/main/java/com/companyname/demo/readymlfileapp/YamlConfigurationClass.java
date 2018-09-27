@@ -4,6 +4,14 @@ import java.util.Map;
 
 public class YamlConfigurationClass {
 	private Map<String, Map<String, String>> spring;
+	private Map<String, String> server;
+	public Map<String, String> getServer() {
+		return server;
+	}
+
+	public void setServer(Map<String, String> server) {
+		this.server = server;
+	}
 
 	public Map<String, Map<String, String>> getSpring() {
 		return spring;
@@ -15,7 +23,7 @@ public class YamlConfigurationClass {
 
 	@Override
 	public String toString() {
-		return "YamlConfigurationClass [spring=" + spring + "]";
+		return "YamlConfigurationClass [spring=" + spring + ", server=" + server + "]";
 	}
 
 	

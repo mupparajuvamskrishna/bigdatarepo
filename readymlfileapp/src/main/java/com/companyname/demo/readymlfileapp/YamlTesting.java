@@ -17,8 +17,10 @@ public class YamlTesting {
 					new File("F:\\springbootworkspace\\readymlfileapp\\src\\main\\resources\\application.yml"),
 					YamlConfigurationClass.class);
 //		/	System.out.println(ReflectionToStringBuilder.toString(user, ToStringStyle.MULTI_LINE_STYLE));
+			System.out.println(yamlConfigurationClass);
 			System.out.println(ReflectionToStringBuilder.toString(yamlConfigurationClass, ToStringStyle.MULTI_LINE_STYLE));
 			System.out.println(yamlConfigurationClass.getSpring().get("applicaton").get("name"));
+			//System.out.println(yamlConfigurationClass.getPort().get("port"));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
