@@ -1,0 +1,143 @@
+val schema = StructType( List(
+  StructField("empid", StringType),
+  StructField("empname", StringType),
+  StructField("empsal", StringType)
+))
+
+import org.apache.spark.sql.types.StructType
+
+
+
+Hadoop 2.8.5
+Hive 2.3.4
+Hbase 1.4.8
+Spark 2.4.0
+
+beeline> !connect jdbc:hive2://ec2-3-90-191-175.compute-1.amazonaws.com:10000/default
+Connecting to jdbc:hive2://ec2-3-90-191-175.compute-1.amazonaws.com:10000/default
+Enter username for jdbc:hive2://ec2-3-90-191-175.compute-1.amazonaws.com:10000/default: hadoop
+Enter password for jdbc:hive2://ec2-3-90-191-175.compute-1.amazonaws.com:10000/default: ******
+Connected to: Apache Hive (version 2.3.4-amzn-0)
+Driver: Hive JDBC (version 2.3.4-amzn-0)
+Transaction isolation: TRANSACTION_REPEATABLE_READ
+
+0: jdbc:hive2://ec2-3-90-191-175.compute-1.am> create database vamsiemrdemo;
+No rows affected (1.359 seconds)
+0: jdbc:hive2://ec2-3-90-191-175.compute-1.am> use vamsiemrdemo;
+No rows affected (0.08 seconds)
+0: jdbc:hive2://ec2-3-90-191-175.compute-1.am> create table employee (empid int , empname string, empsal int);
+No rows affected (0.584 seconds)
+0: jdbc:hive2://ec2-3-90-191-175.compute-1.am> show create table employee;
++----------------------------------------------------+
+|                   createtab_stmt                   |
++----------------------------------------------------+
+| CREATE TABLE `employee`(                           |
+|   `empid` int,                                     |
+|   `empname` string,                                |
+|   `empsal` int)                                    |
+| ROW FORMAT SERDE                                   |
+|   'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe'  |
+| STORED AS INPUTFORMAT                              |
+|   'org.apache.hadoop.mapred.TextInputFormat'       |
+| OUTPUTFORMAT                                       |
+|   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat' |
+| LOCATION                                           |
+|   'hdfs://ip-172-31-17-144.ec2.internal:8020/user/hive/warehouse/vamsiemrdemo.db/employee' |
+| TBLPROPERTIES (                                    |
+|   'transient_lastDdlTime'='1549282433')            |
++----------------------------------------------------+
+14 rows selected (0.412 seconds)
+
+
+CREATE  TABLE Employee(
+ID BIGINT,
+NAME STRING, 
+AGE INT,
+SALARY BIGINT 
+)
+COMMENT 'This is Employee table stored as textfile partitioned by DEPARTMENT'
+PARTITIONED BY(DEPARTMENT STRING)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE ;
+
+LOAD DATA INPATH 'hdfs://ip-172-31-17-144.ec2.internal:8020/user/hive/warehouse/hr_employees.csv' INTO TABLE Employee PARTITION (department='HR');
+LOAD DATA INPATH 'hdfs://ip-172-31-17-144.ec2.internal:8020/user/hive/warehouse/bigdata_employees.csv' INTO TABLE Employee PARTITION (department='BIGDATA');
+........................................................................................
+[root@ip-172-31-17-144 ~]# hadoop fs -mkdir hdfs://ip-172-31-17-144.ec2.internal:8020/user/hive/warehouse/vamsiemrdemo
+[root@ip-172-31-17-144 ~]# hadoop fs -mkdir hdfs://ip-172-31-17-144.ec2.internal:8020/user/hive/warehouse/vamsiemrdemo/department=HR
+[root@ip-172-31-17-144 ~]# hadoop fs -put hr_employees.csv hdfs://ip-172-31-17-144.ec2.internal:8020/user/hive/warehouse/vamsiemrdemo/department=HR
+
+CREATE EXTERNAL TABLE Employee(
+ID BIGINT,
+NAME STRING, 
+AGE INT,
+SALARY BIGINT 
+)
+COMMENT 'This is Employee table stored as textfile partitioned by DEPARTMENT'
+PARTITIONED BY(DEPARTMENT STRING)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+LOCATION 'hdfs://ip-172-31-17-144.ec2.internal:8020/user/hive/warehouse/vamsiemrdemo';
+MSCK REPAIR TABLE employee;
+
+
+
+spark-shell --executor-memory 2g --master yarn
+
+val sqlContext = new org.apache.spark.sql.hive.HiveContext(sc)
+val result = sqlContext.sql("select * from vamsiemrdemo.employee")
+
+result.write.format("parquet").mode("overwrite").save("hdfs://ip-172-31-17-144.ec2.internal:8020/" + "user/hive/warehouse/vamsiemrparquetdemo")
+
+
+
+
+
+import org.apache.spark.sql.SaveMode
+val employeeDataFrame= spark.read.parquet("hdfs://ip-172-31-17-144.ec2.internal:8020/user/hive/warehouse/vamsiemrparquetdemo/*.parquet");
+
+CREATE EXTERNAL TABLE employeebkp(
+ID BIGINT,
+NAME STRING, 
+AGE INT,
+SALARY BIGINT 
+)
+STORED AS PARQUET
+LOCATION 'hdfs://ip-172-31-17-144.ec2.internal:8020/user/hive/warehouse/vamsiemrparquetdemo';
+MSCK REPAIR TABLE employee;
+employeeDataFrame.write.mode(SaveMode.Overwrite).saveAsTable("vamsiemrdemo.employeebkp")
+employeeDataFrame.write.format("parquet").mode(SaveMode.Overwrite).saveAsTable("vamsiemrdemo.employeebkp")
+
+
+
+
+
+
+
+
+
+
+
+...............................Hive.................................
+CREATE  TABLE Employee(
+EMPID STRING,
+EMPNAME STRING, 
+EMPSAL STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE ;
+
+LOAD DATA  INPATH 'hdfs://ip-172-31-84-216.ec2.internal:8020/emptest/employee.txt' INTO TABLE Employee ;
+
+CREATE EXTERNAL TABLE Employee(
+EMPID STRING,
+EMPNAME STRING, 
+EMPSAL STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE 
+LOCATION 'hdfs://ip-172-31-84-216.ec2.internal:8020/user/hive/warehouse/vamsiemrdemo';
